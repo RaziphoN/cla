@@ -104,13 +104,15 @@ module Automation
             prs = JSON.parse(output)
 
             if !options[:view_given]
+                index = 1
                 prs.each do |value|
-                    printf("[%s](%s) - %s [%s -> %s](#%4d)\n", value['createdAt'], value['author']['name'], value['title'], value['headRefName'], value['baseRefName'], value['number'])
+                    printf("%02d [%s](%s) - %s [%s -> %s](#%4d)\n", index, value['createdAt'], value['author']['name'], value['title'], value['headRefName'], value['baseRefName'], value['number'])
+                    index += 1
                 end
             else
                 count = prs.length
                 if options[:view] < count
-                    `open #{prs[options[:view]]['url']}`
+                    `open #{prs[options[:view] - 1]['url']}`
                 else
                     print "List contains less then #{options[:view]} pull requests!\n"
                     prs.each do |value|

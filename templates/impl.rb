@@ -9,4 +9,8 @@ module $PROJECT
 
         return params
     end
+
+    def self.get_pr_review_list_query()
+        return "state:open"
+    end
 end
