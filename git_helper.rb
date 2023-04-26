@@ -35,6 +35,6 @@ module GitHelper
     end
     
     def self.get_last_commit_message()
-        return `git log HEAD -1 --no-merges --format="%s"`
+        return `git log HEAD -1 --no-merges --format="%s"`.strip
     end
 end

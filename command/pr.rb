@@ -115,8 +115,10 @@ module Automation
                     `open #{prs[options[:view] - 1]['url']}`
                 else
                     print "List contains less then #{options[:view]} pull requests!\n"
+                    index = 1
                     prs.each do |value|
-                        printf("[%s](%s) - %s [%s -> %s](#%4d)\n", value['createdAt'], value['author']['name'], value['title'], value['headRefName'], value['baseRefName'], value['number'])
+                        printf("%02d [%s](%s) - %s [%s -> %s](#%4d)\n", index, value['createdAt'], value['author']['name'], value['title'], value['headRefName'], value['baseRefName'], value['number'])
+                        index += 1
                     end
                 end
             end
