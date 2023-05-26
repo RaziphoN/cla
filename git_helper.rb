@@ -1,6 +1,6 @@
 
 module GitHelper
-    def self.git_root_dir()
+    def self.get_root_dir()
         dir = `git rev-parse --show-toplevel`
         return dir
     end
@@ -29,8 +29,8 @@ module GitHelper
     end
     
     def self.get_commit_messages_between_commits(base, head)
-        head = head.gsub(%r!\s!, '')
-        base = base.gsub(%r!\s!, '')
+        head = head.strip
+        base = base.strip
         return `git log #{head} --not #{base} --no-merges --format="%s"`
     end
     

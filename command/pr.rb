@@ -1,24 +1,41 @@
 require 'json'
+require 'optimist'
 
+require_relative './../utility'
 require_relative './../gh_helper'
 require_relative './../git_helper'
 require_relative './../config'
 
-module Automation
-    def self.pull_request(subcommand, value, options)
-        GhHelper.auth()
+module CLI
+    PR_SUBCOMMANDS = ['open', 'review-list']
 
-        case subcommand
-            when 'open'
-                pr_open(value, options)
-            when 'review-list'
-                pr_review_list(value, options)
-            when 'merge-list'
-                pr_merge_list(value, options)
-        end
+    def self.command_pr_parse()
+        command = ARGV.shift
+        Optimist.die "Unknown subcommand #{command.inspect()}" unless PR_SUBCOMMANDS.include? command
+        method = command_to_method(command)
+        GhHelper.auth()
+        self.send("command_pr_#{method}")
     end
 
-    def self.pr_open(value, options)
+    def self.command_pr_open_options()
+        options = {}
+        options = Optimist::options do
+            opt(:dry, "Run a command, but without really changing anything, just check what you're about to do", :short => :n)
+            stop_on_unknown()
+        end
+
+        return options
+    end
+
+    def self.command_pr_open()
+        options = command_pr_open_options()
+        branch = ARGV.shift
+        Optimist.die "Unknown branch #{branch.inspect()}" if branch == nil || !GitHelper.branch_exists_on_remote?(branch, 'origin')
+        options.concat(command_pr_open_options())
+        pr_open_execute(branch, options)
+    end
+
+    def self.pr_open_execute(value, options)
         if !GitHelper.repo_exists?()
             print 'Git repo doesnt exists!'
             exit(1)
@@ -64,7 +81,26 @@ module Automation
         end
     end
 
-    def self.pr_review_list(value, options)
+    def self.command_pr_review_list_options()
+        options = {}
+        options = Optimist::options do
+            opt(:dry, "Run a command, but without really changing anything, just check what you're about to do", :short => :n)
+            opt(:web, "Show in the web-browser (doesn't wor with open)", :short => :none)
+            opt(:view, "Choose pull requests with label (only with review-list)", :type => :int, :short => :none)
+            conflicts(:view, :web)
+            stop_on_unknown()
+        end
+
+        return options
+    end
+
+    def self.command_pr_review_list()
+        options = command_pr_review_list_options()
+        pr_review_list_execute(options)
+    end
+
+
+    def self.pr_review_list_execute(options)
         if !GitHelper.repo_exists?()
             print 'Git repo doesnt exists!'
             exit(1)
@@ -123,9 +159,5 @@ module Automation
                 end
             end
         end
-    end
-
-    def self.pr_merge_list(value, options)
-        print 'Not implemented!'
     end
 end

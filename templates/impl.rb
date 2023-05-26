@@ -13,4 +13,8 @@ module $PROJECT
     def self.get_pr_review_list_query()
         return "state:open"
     end
+    
+    def self.get_workflow_params(workflow)
+        return {}
+    end
 end

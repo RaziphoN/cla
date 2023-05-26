@@ -1,6 +1,7 @@
 require 'jira-ruby'
 require_relative './config'
 
+
 module JiraHelper
     def self.get_client()
         login = get_login()

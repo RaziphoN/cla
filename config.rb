@@ -5,10 +5,6 @@ module Config
     @@global_path = "#{File.dirname(__FILE__)}/#{@@filename}"
     @@project_path = "./.cla"
     @@values = nil
-    
-    def self.set_value(name, value, level)
-        print 'Not implemented!'
-    end
 
     def self.get_values()
         if @@values != nil
