@@ -61,4 +61,10 @@ module Config
         source = File.read(path)
         return source
     end
+
+    def self.project_module_name()
+        project = project()
+        module_name = project.slice(0,1).capitalize + project.slice(1..-1)
+        return module_name
+    end
 end

@@ -1,6 +1,7 @@
 require 'json'
 require 'optimist'
 
+require_relative './../error'
 require_relative './../utility'
 require_relative './../gh_helper'
 require_relative './../git_helper'
@@ -36,31 +37,18 @@ module CLI
     end
 
     def self.pr_open_execute(value, options)
-        if !GitHelper.repo_exists?()
-            print 'Git repo doesnt exists!'
-            exit(1)
-        end
-
-        project = Config.project()
-        if project == nil
-            print 'Project is not initialized! Call "config init" first on repo!'
-            exit(2)
-        end
+        Validation.validate_repository_exists()
+        Validation.validate_project_is_initialized()
 
         branch = value
-        if !GitHelper.branch_exists_on_remote?(branch, "origin")
-            print "Branch '#{branch}' doesn't exist on remote 'origin'!"
-            exit(5)
-        end
+        project_dir = Config.project_dir()
+        project = Config.project()
 
-        project_dir = Config.project_dir(project)
-        if !File.exists?("#{project_dir}/impl.rb")
-            print 'Must have impl.rb file!'
-            exit(3)
-        end
+        Validation.validate_branch_exists(branch, "origin")
 
         prj_module = project.slice(0,1).capitalize + project.slice(1..-1)
         require_relative "#{project_dir}/impl" 
+
         if !eval("#{prj_module}.respond_to?(:get_pr_params)")
             print 'Impl must implement :get_pr_params instance method'
             exit(4)
@@ -101,31 +89,20 @@ module CLI
 
 
     def self.pr_review_list_execute(options)
-        if !GitHelper.repo_exists?()
-            print 'Git repo doesnt exists!'
-            exit(1)
-        end
+        Validation.validate_repository_exists()
+        Validation.validate_project_is_initialized()
 
         project = Config.project()
-        if project == nil
-            print 'Project is not initialized! Call "config init" first on repo!'
-            exit(2)
-        end
-
         project_dir = Config.project_dir(project)
-        if !File.exists?("#{project_dir}/impl.rb")
-            print 'Must have impl.rb file!'
-            exit(3)
-        end
-
-        prj_module = project.slice(0,1).capitalize + project.slice(1..-1)
         require_relative "#{project_dir}/impl" 
-        if !eval("#{prj_module}.respond_to?(:get_pr_review_list_query)")
+        prj = Object.const_get(Config.project_module_name())
+
+        if !prj.respond_to?(:get_pr_review_list_query)
             print 'Impl must implement :get_pr_review_list_query instance method'
-            exit(4)
+            exit(100)
         end
 
-        query = eval("#{prj_module}.get_pr_review_list_query()")
+        query = prj.get_pr_review_list_query()
         cmd = "gh pr list --search \"#{query}\" --json \"title,author,baseRefName,createdAt,headRefName,number,url\""
 
         if options[:dry]

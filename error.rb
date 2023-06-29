@@ -10,6 +10,11 @@ module Error
         print "Unknown subcommand #{command.inspect()}"
         exit(3)
     end
+    
+    def self.file_does_not_exist(file)
+        print "File #{file} doesn't exist!"
+        exit(4)
+    end
 
     def self.branch_doesnt_exists(branch, remote)
         print "Branch '#{branch}' doesn't exist on remote '#{remote}'!"
@@ -51,8 +56,18 @@ module Validation
         end
 
         project_dir = Config.project_dir(project)
-        if !File.exists?("#{project_dir}")
+        if !Dir.exists?("#{project_dir}")
             Error.project_is_not_initialized(project)
+        end
+
+        impl_filepath = "#{project_dir}/impl.rb"
+        if !File.exists?(impl_filepath)
+            Error.file_does_not_exist(impl_filepath)
+        end
+
+        cfg_filepath = "#{project_dir}/config.json"
+        if !File.exists?(cfg_filepath)
+            Error.file_does_not_exist(cfg_filepath)
         end
     end
 end

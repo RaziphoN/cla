@@ -11,7 +11,7 @@ module GitHelper
     end
 
     def self.get_current_branch()
-        return `git branch --show-current`
+        return `git branch --show-current`.strip
     end
     
     def self.is_ancestor_of(base, branch)
