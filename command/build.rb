@@ -69,6 +69,7 @@ module CLI
                     next
                 end
 
+                print "Scheduled workflow #{workflow} for #{ref}\n"
                 `#{cmd}`
             end
         end
