@@ -17,9 +17,7 @@ module CLI
     def self.execute()
         command = nil
         globalopts = Optimist::options do
-            version "CLA Version: #{VERSION}"
-            opt :version, "Print version and exit", :short => :v
-            opt :help, "Show help message", :short => :h
+            version "cla: #{VERSION}"
             stop_on_unknown()
         end
         return if ARGV.empty?()

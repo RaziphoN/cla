@@ -8,58 +8,49 @@ require_relative './../git_helper'
 require_relative './../config'
 
 module CLI
-    def self.command_build_parse()
-        GhHelper.auth()
-        self.send("command_build")
+    class Option
+        @name = ""
+        @desc = ""
+        @opts = {}
     end
 
-    def self.command_build_options()
-       options = {}
-       options[:dry] = true
+    def self.command_build_parse()
+        GhHelper.auth()
+
+        Validation.validate_repository_exists()
+        Validation.validate_project_is_initialized()
+        project = Config.project()
+        project_dir = Config.project_dir(project)
+        require_relative "#{project_dir}/impl"
+        prj = Object.const_get(Config.project_module_name())
+
+        command_build(prj)
+    end
+
+    def self.command_build_options(custom_opts)
+       options = Optimist::options do
+           opt(:all, "Build all PRs", :short => :x)
+           opt(:dry, "Run a command, but without really changing anything, just check what you're about to do")
+           custom_opts.each do |key, value|
+               opt(key, value[:desc], value)
+           end
+           stop_on_unknown()
+       end
+
        return options
     end
 
-    def self.command_build()
-        options = command_build_options()
-        command_build_execute(options)
-    end
-    
-    def self.command_build_execute(options)
-        build_execute_batch(options)
+    def self.command_build(prj)
+        custom_opts = prj.get_build_options()
+        options = command_build_options(custom_opts)
+        command_build_execute(prj, options)
     end
 
-    def self.build_execute_batch(options)
-        Validation.validate_repository_exists()
-        Validation.validate_project_is_initialized()
-
-        if options[:all]
-            pr_query = "org:tripledotstudios state:open draft:false author:@me"
-            cmd = "gh pr list --search \"#{pr_query}\" --json \"headRefName,mergeable,state\""
-            output = `#{cmd}`
-            prs = JSON.parse(output)
-        end
-
-        if (prs == nil || prs.length == 0)
-            options[:branch] = GitHelper.get_current_branch()
-            build_execute(options)
-        else
-            for pr in prs
-                if !pr['mergeable']
-                    next
-                end
-
-                options[:branch] = pr['headRefName']
-                self.build_execute(options)
-            end
-        end
+    def self.command_build_execute(prj, options)
+        build_execute(prj, options)
     end
 
-    def self.build_execute(options)
-        project = Config.project()
-        project_dir = Config.project_dir(project)
-        require_relative "#{project_dir}/impl" 
-        prj = Object.const_get(Config.project_module_name())
-
+    def self.build_execute(prj, options)
         if !prj.respond_to?(:get_build_params)
             print 'Impl must implement :get_build_params instance method'
             exit(100)
@@ -68,11 +59,16 @@ module CLI
         params = prj.get_build_params(options)
         workflows = params['workflows']
         query = params['query']
+        refs = params['refs']
 
-        for workflow in workflows
-            cmd = "gh workflow run #{workflow} #{query}"
-            print "#{cmd}\n"
-            if !options[:dry]
+        for ref in refs
+            for workflow in workflows
+                cmd = "gh workflow run #{workflow} --ref \"#{ref}\" #{query}"
+                if options[:dry]
+                    print "#{cmd}\n"
+                    next
+                end
+
                 `#{cmd}`
             end
         end

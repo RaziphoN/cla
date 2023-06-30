@@ -41,8 +41,8 @@ module CLI
         Validation.validate_project_is_initialized()
 
         branch = value
-        project_dir = Config.project_dir()
         project = Config.project()
+        project_dir = Config.project_dir(project)
 
         Validation.validate_branch_exists(branch, "origin")
 

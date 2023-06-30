@@ -11,7 +11,11 @@ module $PROJECT
     end
 
     def self.get_pr_review_list_query()
-        return "state:open"
+        return "state:open draft:false review-requested:@me is:pr"
+    end
+
+    def self.get_build_options()
+        return {} 
     end
 
     def self.get_build_params(options)
